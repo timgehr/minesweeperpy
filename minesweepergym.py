@@ -27,6 +27,7 @@ class Minesweeper(object):
     self.addMines()
     self.reward = 0
     self.clicks = 0
+    self.takenActions = []
 
   def addMines(self):
     mineBoard = [[0 for row in range(5)] for column in range(5)]
@@ -60,24 +61,23 @@ class Minesweeper(object):
         returnBoard[r][c] = self.board[r+1][c+1]
     return returnBoard
 
-  def getState(self, board):
+  def getState(self):
     state = ()
     for r in range(3):
       for c in range(3):
-        state = state + (board[r][c],)
+        state = state + (self.board[r+1][c+1],)
     return state
 
   def click(self, action):
-    if self.mines[self.actionSpace[action][0]][self.actionSpace[action][1]] == 1:
-      self.board[self.actionSpace[action][0]][self.actionSpace[action][1]] = -2
+    if self.mines[self.actionSpace[action][0]+1][self.actionSpace[action][1]+1] == 1:
+      self.board[self.actionSpace[action][0]+1][self.actionSpace[action][1]+1] = -2
     elif action in self.takenActions:
       self.clicks += 1
     else:
-      self.board = self.openAdjacentBlocks(self.board, self.mines, self.actionSpace[action][0], self.actionSpace[action][1], self.actionSpace[action][0], self.actionSpace[action][1])
-      self.takenActions.append(self.actionSpace[action])
+      self.board = self.openAdjacentBlocks(self.board, self.mines, self.actionSpace[action][0]+1, self.actionSpace[action][1]+1, self.actionSpace[action][0]+1, self.actionSpace[action][1]+1)
+      self.takenActions.append(action)
       self.reward += 1
       self.clicks += 1
-
     return self.board, self.reward, self.is_done(self.board), None
   
   def adjacentCellsScore(self, board, x, y):
@@ -89,7 +89,6 @@ class Minesweeper(object):
         score += 1
       if board[x+1][yi] == 1:
         score += 1
-
     return score
 
   def openAdjacentBlocks(self, board, mineboard, x, y, origx, origy):
@@ -97,7 +96,6 @@ class Minesweeper(object):
       return board
     if x == 0 or y == 0 or x == 4 or y == 4:
       return board
-    
     if self.adjacentCellsScore(mineboard, x, y) == 0:
       board[x][y] = 0
       for yi in range(y-1, y+2):
@@ -147,7 +145,7 @@ if __name__ == "__main__":
   for episode in range(5):
     done = False
     obsrv = env.getBoard()
-    state = env.getState(obsrv)
+    state = env.getState()
 
     while not done:
       randomval = random.random()
@@ -158,7 +156,7 @@ if __name__ == "__main__":
         action = bestAction(Q_TABLE, obsrv, env.actions)
 
       obsrv_new, reward, done, debugg = env.click(action)
-      env.printBoard(obsrv_new)
+
       action_new = bestAction(Q_TABLE, obsrv_new, env.actions)
 
       Q_old = getQ(Q_TABLE, obsrv, env.actions.index(action))
@@ -169,9 +167,8 @@ if __name__ == "__main__":
     
     if EPSILON - 1 / EPISODES >= 0:
       EPSILON -= 1 / EPISODES
-    #if episode % 500 == 0:
-      #print("This is run ", episode, ". The reward was ",reward)
-    print("This is run ", episode, ". The reward was ",reward)
+    if episode % 500 == 0:
+      print("On run ", episode, ". The reward was ",reward)
     
     REWARDS[episode] = reward
     env.reset()
