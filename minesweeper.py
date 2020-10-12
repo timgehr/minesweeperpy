@@ -2,14 +2,14 @@ import random
 
 def Minesweeper():
   win = 0
-  board = [[-1 for row in range(6)] for column in range(6)]
+  board = [[-1 for row in range(5)] for column in range(5)]
 
-  mineBoard = [[0 for row in range(6)] for column in range(6)]
+  mineBoard = [[0 for row in range(5)] for column in range(5)]
   
   bombs = 0
-  while bombs < 3:
-    x = random.randint(1,4)
-    y = random.randint(1,4)
+  while bombs < 2:
+    x = random.randint(1,3)
+    y = random.randint(1,3)
     if mineBoard[x][y] == 0:
       mineBoard[x][y] = 1
       bombs += 1
@@ -23,11 +23,15 @@ def Minesweeper():
     x = int(input('Y:'))
 
     if mineBoard[x][y] == 1:
-      print("L")
-      print(score)
-      quit()
+      win = -1
+      return score
     else:
       board = openAdjacentBlocks(board, mineBoard, x, y, x, y)
+      score += 1
+    
+    if score == 7:
+      win = 1
+      return score
 
 
 
@@ -46,7 +50,7 @@ def adjacentCellsScore(board, x, y):
 def openAdjacentBlocks(board, mineboard, x, y, origx, origy):
   if board[x][y] != -1:
     return board
-  if x == 0 or y == 0 or x == 5 or y == 5:
+  if x == 0 or y == 0 or x == 4 or y == 4:
     return board
   
   if adjacentCellsScore(mineboard, x, y) == 0:
@@ -60,8 +64,8 @@ def openAdjacentBlocks(board, mineboard, x, y, origx, origy):
   return board
 
 def printBoard(board):
-  for r in range(4, 0, -1):
-    for c in range(1, 5):
+  for r in range(3, 0, -1):
+    for c in range(1, 4):
       print(board[r][c], end = ' ')
     print()
 
