@@ -18,16 +18,16 @@ class Minesweeper(object):
       '9': (2,2)
     }
     self.actions = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-    self.reward = 0
     self.clicks = 0
     self.takenActions = []
+    self.reward = 0
   
   def reset(self):
     self.board = [[-1 for row in range(5)] for column in range(5)]
     self.addMines()
-    self.reward = 0
     self.clicks = 0
     self.takenActions = []
+    self.reward = 0
 
   def addMines(self):
     mineBoard = [[0 for row in range(5)] for column in range(5)]
@@ -43,11 +43,12 @@ class Minesweeper(object):
   def is_done(self, board):
     for r in range(3):
       for c in range(3):
-        if board[r][c] == -2:
+        if board[r+1][c+1] == -2:
           return True
     if self.clicks == 10:
       return True
-    if self.reward == 7:
+    if board.count(-1) == 2:
+      self.reward = 10
       return True
     return False
   
@@ -123,14 +124,15 @@ def bestAction(Q, obsrv, actions):
 
 # Your Algorithm goes here!
 if __name__ == "__main__":
-  STEPSIZE = 0.1
+  STEPSIZE = 0.4
   GAMMA = 0.95
   EPSILON = 1.0
   EPISODES = 50000
+  averager = 0
   REWARDS = [0 for i in range(EPISODES)]
   env = Minesweeper()
 
-  Q_TABLE = [[[[[[[[[[0 #random.uniform(0,7)
+  Q_TABLE = [[[[[[[[[[0#random.uniform(0,7)
   for a in range(9)] 
   for b in range(5)] 
   for c in range(5)] 
@@ -142,7 +144,8 @@ if __name__ == "__main__":
   for i in range(5)]
   for j in range(5)]
 
-  for episode in range(5):
+  for episode in range(EPISODES):
+    skip = 0
     done = False
     obsrv = env.getBoard()
     state = env.getState()
@@ -156,6 +159,9 @@ if __name__ == "__main__":
         action = bestAction(Q_TABLE, obsrv, env.actions)
 
       obsrv_new, reward, done, debugg = env.click(action)
+      if reward == 0:
+        skip = episode
+        break
 
       action_new = bestAction(Q_TABLE, obsrv_new, env.actions)
 
@@ -165,12 +171,16 @@ if __name__ == "__main__":
       Q_TABLE[obsrv[0][0]+1][obsrv[0][1]+1][obsrv[0][2]+1][obsrv[1][0]+1][obsrv[1][1]+1][obsrv[1][2]+1][obsrv[2][0]+1][obsrv[2][1]+1][obsrv[2][2]+1][env.actions.index(action)] = Q_old + STEPSIZE*(reward + GAMMA*Q_new - Q_old)
       obsrv = obsrv_new
     
-    if EPSILON - 1 / EPISODES >= 0:
-      EPSILON -= 1 / EPISODES
-    if episode % 500 == 0:
-      print("On run ", episode, ". The reward was ",reward)
-    
-    REWARDS[episode] = reward
+    averager += reward
+    if skip == episode:
+      episode-=1
+    else:
+      if EPSILON - 1 / EPISODES >= 0:
+        EPSILON -= 1 / EPISODES
+      if episode % 20 == 0:
+        print("On run ", episode, ". The reward was ", reward)
+        averager = 0
+      REWARDS[episode] = reward
     env.reset()
 
 
